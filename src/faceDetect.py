@@ -4,15 +4,17 @@ import cv2
 import cv2.cv as cv
 import numpy as np
 
-HAAR_FRONTAL_FACE = "./src/haarcascade_frontalface_alt.xml"
-VIDEO_FILE = "/media/sdb1/Dropbox/FIME/8voSemestre/VisionComputacional/project/media/base1.avi"
+HAAR_FRONTAL_FACE = './src/haarcascade_frontalface_alt.xml'
+VIDEO_FILE = '/media/sdb1/Dropbox/FIME/8voSemestre/VisionComputacional/project/media/base1.avi'
 
 class FaceDetect:
-    def __init__(self):
+    def __init__(self, DEBUG=False):
         # Constructor for the videocapture, 0 because there is only one webcam connected
         # instead of 0, a video file could be passed as parameter
         self.vidCap = cv2.VideoCapture(0)
         #self.vidCap = cv2.VideoCapture(VIDEO_FILE)
+        self.DEBUG = DEBUG
+        print 'FaceDetect : DEBUG set to', self.DEBUG
 
     def getFrame(self):
         _,frame = self.vidCap.read() # tuple contains a return value and image
@@ -34,7 +36,8 @@ class FaceDetect:
         if len(rectangles) > 1:
             for i in range(0, len(rectangles)):
                 re = rectangles[i]
-                print re
+                if self.DEBUG:
+                    print re
                 re[:,:2] += re[:,2]
                 rectangles[i] = re
         else:
@@ -46,15 +49,17 @@ class FaceDetect:
         height = y2-y1
         size = (width, height)
 
-        print "W:", width, "H:", height
+        if self.DEBUG:
+            print 'W:', width, 'H:', height
         cropped = cv.CreateImage(( size ), 8, 3) #  CreateImage( CvSize size, int depth, int channels  )
         src_region = cv.GetSubRect(cv.fromarray(original), (x1, y1, width, height) ) # GetSubRect( img, (pos_left, pos_top, width, height) )
         cv.Copy(src_region, cropped)
         cropped = np.asarray(cropped[:,:])
         return cropped
 
-if __name__ == "__main__":
-    fD = FaceDetect()
+if __name__ == '__main__':
+    DEBUG = True
+    fD = FaceDetect(DEBUG)
     storage = cv.CreateMemStorage()
     i = 0
     while(1):
@@ -62,25 +67,27 @@ if __name__ == "__main__":
         rectangle = fD.detectFaces(frame)
         if rectangle is not None:
 
-            print "\nPossible face at", rectangle.tolist()
+            if self.DEBUG:
+                print '\nPossible face at', rectangle.tolist()
             rectangle = rectangle.tolist()[0]
 
             cropped = fD.cropRectangle( (rectangle[2],rectangle[3]),(rectangle[0],rectangle[1]), frame )
-            cv2.imshow("Face", cropped)
+            cv2.imshow('Face', cropped)
             i+=1
 
             cv2.rectangle(frame, (rectangle[0],rectangle[1]), (rectangle[2],rectangle[3]), (0,255,0), 5)
             
-            print "BLUE",(rectangle[0],rectangle[1])
-            cv2.circle(frame,(rectangle[0],rectangle[1]),5,(255,0,0),-1)
+            if self.DEBUG:
+                print 'BLUE',(rectangle[0],rectangle[1])
+                cv2.circle(frame,(rectangle[0],rectangle[1]),5,(255,0,0),-1)
             
-            print "RED",(rectangle[2],rectangle[3])
-            cv2.circle(frame,(rectangle[2],rectangle[3]),5,(0,0,255),-1)
+                print 'RED',(rectangle[2],rectangle[3])
+                cv2.circle(frame,(rectangle[2],rectangle[3]),5,(0,0,255),-1)
 
-        cv2.imshow("FaceDetection", frame)
+        cv2.imshow('FaceDetection', frame)
         
         if cv2.waitKey(5) == 27:
-            cv2.imwrite("lastFrame.png", frame)
-            cv2.imwrite("lastFace.png", cropped)
+            cv2.imwrite('lastFrame.png', frame)
+            cv2.imwrite('lastFace.png', cropped)
             break
     cv2.destroyAllWindows()
